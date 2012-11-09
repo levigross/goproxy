@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"sync/atomic"
+	"strings"
 )
 
 // The basic proxy type. Implements http.Handler.
@@ -31,7 +32,7 @@ func (proxy *ProxyHttpServer) copyAndClose(w io.WriteCloser, r io.Reader) {
 		proxy.Logger.Println("Error closing", err)
 	}
 }
-
+//TODO: Heavy loop refactor if able to 
 func copyHeaders(dst, src http.Header) {
 	for k, _ := range dst {
 		dst.Del(k)
@@ -75,7 +76,7 @@ func (proxy *ProxyHttpServer) filterResponse(respOrig *http.Response, ctx *Proxy
 // Standard net/http function. Shouldn't be used directly, http.Serve will use it.
 func (proxy *ProxyHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//r.Header["X-Forwarded-For"] = w.RemoteAddr()
-	if r.Method == "CONNECT" {
+	if strings.HasPrefix(r.Method, "CON") {
 		proxy.handleHttps(w, r)
 	} else {
 		ctx := &ProxyCtx{Req: r, sess: atomic.AddInt32(&proxy.sess, 1), proxy: proxy}
